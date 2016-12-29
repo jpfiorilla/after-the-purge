@@ -3,6 +3,10 @@
   "name": "undefined",
   "version": "0.0.1",
   "dependencies": {
+    "fs": "0.0.1-security",
+    "request": "^2.79.0",
+    "request-promise": "^4.1.1",
+    "twit": "^2.2.5",
     "webshot": "^0.18.0"
   }
 }

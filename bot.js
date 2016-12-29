@@ -1,75 +1,65 @@
-/*
-example.js
- 
-this electron script will screen-capture the webpage http://electron.atom.io
- 
-instruction
-    1. save this script as example.js
-    2. run the shell command:
-        $ npm install electron-lite && \
-            printf '{"main":"example.js","name":"undefined","version":"0.0.1"}' > \
-            package.json && \
-            ./node_modules/.bin/electron . --disable-overlay-scrollbar --enable-logging
-    3. view screencapture ./screen-capture.testExampleJs.browser.png
-*/
- 
-/*jslint
-    browser: true,
-    maxerr: 8,
-    maxlen: 96,
-    node: true,
-    stupid: true
-*/
-
-// "just before the city's annual purge, when all crime is legal."
- 
-const getPic = function (url) {
-    'use strict';
-    var options, modeNext, onNext;
-    modeNext = 0;
-    onNext = function (data) {
-        modeNext += 1;
-        switch (modeNext) {
-        case 1:
-            // wait for electron to init 
-            require('electron').app.once('ready', onNext);
-            break;
-        case 2:
-            // init options 
-            options = { frame: false, height: 768, width: 1024, x: 0, y: 0 };
-            // init browserWindow; 
-            options.BrowserWindow = require('electron').BrowserWindow;
-            options.browserWindow = new options.BrowserWindow(options);
-            // goto next step when webpage is loaded 
-            options.browserWindow.webContents.once('did-stop-loading', onNext);
-            // open url 
-            // options.browserWindow.loadURL('http://electron.atom.io');
-            options.browserWindow.loadURL(url);
-            break;
-        case 3:
-            // screen-capture webpage 
-            options.browserWindow.capturePage(options, onNext);
-            break;
-        case 4:
-            // save screen-capture 
-            require('fs').writeFileSync(
-                'screen-capture.testExampleJs.browser.png',
-                data.toPng()
-            );
-            // exit 
-            process.exit(0);
-            break;
-        }
-    };
-    onNext();
-};
-
 const imdb = require('imdb-api');
-imdb.getById('tt0496424').then(things => {
-    console.log(things);
-    getPic(things.imdburl);
-});
-// imdb.getReq({ id: '0496424' }, (err, things) => {
-//     console.log(things)
-//     const url = things.imdburl;
-// });
+const webshot = require('webshot');
+const request = require('request-promise');
+const fs = require('fs');
+
+// const Twit = require('twit');
+const T = require('./t');
+
+imdb.getById('tt0080487')
+    .then(things => {
+    // console.log(things);
+    return things.imdburl;
+})
+.then(url => {
+    request(url, (error, response, body) => {
+    if (!error && response.statusCode === 200) {
+        const purgetext = " just before the city's annual purge, when all crime is legal.";
+        let descriptionDiv = 'class="summary_text" itemprop="description"';
+        let preIndex = body.indexOf(descriptionDiv);
+        let searchIndex = preIndex + body.substring(preIndex).indexOf('</div>');
+        let newBody = body.substring(0, searchIndex-14) + purgetext + body.substring(searchIndex);
+        // console.log(newBody.substring(preIndex, searchIndex+purgetext.length+200));
+        let options = {
+            siteType:'html',
+            shotOffset: {
+                left: 8,
+                right: 0,
+                top: 300,
+                bottom: 0
+            },
+            shotSize: {
+                width: 660,
+                height: 500
+            }
+        };
+        webshot(newBody, 'image.png', options, function(err) {
+            console.log('screenshot now saved to image.png');
+            // tweet();
+        });
+    }
+    })
+})
+
+const tweet = function(){
+    var b64content = fs.readFileSync('./image.png', { encoding: 'base64' });
+    T.post('media/upload', { media_data: b64content }, function (err, data, response) {
+        // now we can assign alt text to the media, for use by screen readers and
+        // other text-based presentations and interpreters
+        var mediaIdStr = data.media_id_string;
+        var altText = "alttext";
+        var meta_params = { media_id: mediaIdStr, alt_text: { text: altText } };
+        console.log('1', data)
+        T.post('media/metadata/create', meta_params, function (err, data, response) {
+            console.log('2', err)
+            if (!err) {
+            // now we can reference the media and post a tweet (media will attach to the tweet)
+            var params = { status: '', media_ids: [mediaIdStr] }
+            
+            T.post('statuses/update', params, function (err, data, response) {
+                console.log(data)
+                })
+            }
+        })
+    })
+}
