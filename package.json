@@ -3,6 +3,7 @@
   "name": "undefined",
   "version": "0.0.1",
   "dependencies": {
+    "request": "^2.79.0",
     "webshot": "^0.18.0"
   }
 }

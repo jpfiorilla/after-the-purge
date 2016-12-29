@@ -1,3 +1,32 @@
+const imdb = require('imdb-api');
+const webshot = require('webshot');
+const request = require('request');
+
+imdb.getById('tt0496424')
+    .then(things => {
+    // console.log(things);
+    return things.imdburl;
+})
+.then(url => {
+    request(url, (error, response, body) => {
+    if (!error && response.statusCode === 200) {
+        const response = JSON.parse(body)
+        console.log("Got a response: ", response.picture)
+        return response;
+    //   } else {
+    //     console.log("Got an error: ", error, ", status code: ", response.statusCode)
+        }
+    })
+})
+.then(response => {
+    if (!response) response = '<html><body>Hello World</body></html>';
+    webshot(response, 'google.png', {siteType:'html'}, function(err) {
+        console.log('screenshot now saved to google.png');
+    });
+})
+
+
+
 /*
 example.js
  
@@ -22,7 +51,8 @@ instruction
 */
 
 // "just before the city's annual purge, when all crime is legal."
- 
+
+/*
 const getPic = function (url) {
     'use strict';
     var options, modeNext, onNext;
@@ -63,13 +93,4 @@ const getPic = function (url) {
     };
     onNext();
 };
-
-const imdb = require('imdb-api');
-imdb.getById('tt0496424').then(things => {
-    console.log(things);
-    getPic(things.imdburl);
-});
-// imdb.getReq({ id: '0496424' }, (err, things) => {
-//     console.log(things)
-//     const url = things.imdburl;
-// });
+*/
