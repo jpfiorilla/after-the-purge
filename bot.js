@@ -1,8 +1,10 @@
 const imdb = require('imdb-api');
 const webshot = require('webshot');
 const request = require('request-promise');
+const fs = require('fs');
 
-
+// const Twit = require('twit');
+const T = require('./t');
 
 imdb.getById('tt0496424')
     .then(things => {
@@ -27,13 +29,37 @@ imdb.getById('tt0496424')
                 bottom: 0
             },
             shotSize: {
-                width: 680,
+                width: 660,
                 height: 450
             }
         };
         webshot(newBody, 'image.png', options, function(err) {
             console.log('screenshot now saved to image.png');
+            tweet();
         });
     }
     })
 })
+
+const tweet = function(){
+    var b64content = fs.readFileSync('./image.png', { encoding: 'base64' });
+    T.post('media/upload', { media_data: b64content }, function (err, data, response) {
+        // now we can assign alt text to the media, for use by screen readers and
+        // other text-based presentations and interpreters
+        var mediaIdStr = data.media_id_string;
+        var altText = "alttext";
+        var meta_params = { media_id: mediaIdStr, alt_text: { text: altText } };
+        console.log('1', data)
+        T.post('media/metadata/create', meta_params, function (err, data, response) {
+            console.log('2', err)
+            if (!err) {
+            // now we can reference the media and post a tweet (media will attach to the tweet)
+            var params = { status: '', media_ids: [mediaIdStr] }
+            
+            T.post('statuses/update', params, function (err, data, response) {
+                console.log(data)
+                })
+            }
+        })
+    })
+}
