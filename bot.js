@@ -6,7 +6,7 @@ const fs = require('fs');
 // const Twit = require('twit');
 const T = require('./t');
 
-imdb.getById('tt0496424')
+imdb.getById('tt0080487')
     .then(things => {
     // console.log(things);
     return things.imdburl;
@@ -30,12 +30,12 @@ imdb.getById('tt0496424')
             },
             shotSize: {
                 width: 660,
-                height: 450
+                height: 500
             }
         };
         webshot(newBody, 'image.png', options, function(err) {
             console.log('screenshot now saved to image.png');
-            tweet();
+            // tweet();
         });
     }
     })
